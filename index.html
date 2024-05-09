@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+
+<body>
+    <div class="card">
+
+        <div class="search">
+            <input type="text" id="cityInput">
+            <img src="./images/search.png" onclick="getWeather()" />
+        </div>
+
+        <div class="weather">
+
+            <img src="./images/clear.png" alt="" id="weatherImage">
+            <h1 class="temp">22° C</h1>
+            <h2 class="city">New York</h2>
+
+            <div class="details">
+
+                <div class="humidity">
+                    <img src="./images/humidity.png" alt="">
+                    <div>
+                        <h3>50%</h3>
+                        <h3>Humidity</h3>
+                    </div>
+                </div>
+
+                <div class="wind">
+                    <img src="./images/wind.png" alt="">
+                    <div>
+                        <h3>15 Km/Hr</h3>
+                        <h3>Wind Speed</h3>
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+</body>
+
+
+<script>
+
+    const cityOutput = document.querySelector('.city');
+    const tempOutput = document.querySelector('.temp');
+    const humidityOutput = document.querySelector('.humidity >div> h3');
+    const windOutput = document.querySelector('.wind> div >h3');
+
+    function getCity() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=YOUR_API_KEY`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const cityName = data.results[0]?data.results[0].components.city: "";
+                        return cityName;
+                    })
+                    .catch(error => {
+                        console.log('Error fetching city name:', error);
+                        return "";
+                    });
+            });
+        } else {
+            console.log('Geolocation is not supported by your browser.');
+        }
+    }
+
+
+    async function getWeather() {
+
+        const cityInput = document.getElementById('cityInput');
+
+        let city = "";
+
+        if (cityInput.value) {
+            city = cityInput.value;
+        } else {
+            city = await getCity();
+        }
+
+        const apikey = '47fb628e7ecd357c0ce578177ac351ee';
+
+        const api = `https://api.openweathermap.org/data/2.5/weather?units=metric&q=${city || "delhi" }`
+
+        const resp = await fetch(api + `&appid=${apikey}`);
+        if (!resp.ok) {
+            if (resp.statusText == "Not Found") {
+                cityOutput.innerHTML = "Invalid City";
+                tempOutput.innerHTML = "__";
+                humidityOutput.innerHTML = "";
+                windOutput.innerHTML = "";
+                return;
+            }
+
+            cityOutput.innerHTML = "Something Went Wrong";
+            return;
+        }
+
+        const data = await resp.json();
+
+        cityOutput.innerHTML = data.name;
+        tempOutput.innerHTML = data.main.temp;
+        humidityOutput.innerHTML = data.main.humidity + "%";
+        windOutput.innerHTML = data.wind.speed + "Km/h";
+
+        const imgOutput = document.getElementById("weatherImage");
+        const weather = data.weather[0].id;
+
+        if (weather >= 200 && weather < 400) {
+            imgOutput.src = "./images/drizzle.png";
+        } else if (weather >= 400 && weather < 500) {
+            imgOutput.src = "./images/rain.png";
+        } else if (weather >= 500 && weather < 600) {
+            imgOutput.src = "./images/snow.png";
+        } else if (weather >= 600 && weather < 700) {
+            imgOutput.src = "./images/snow.png";
+        } else if (weather >= 700 && weather < 800) {
+            imgOutput.src = "./images/mist.png";
+        } else if (weather === 800) {
+            imgOutput.src = "./images/clear.png";
+        } else if (weather > 800 && weather < 900) {
+            imgOutput.src = "./images/clouds.png"
+        }
+    }
+
+    getWeather();
+
+</script>
+
+</html>
